@@ -10,6 +10,11 @@ fn main() {
     let contents = fs::read(file_path)
         .expect("Should have been able to read the file");
     
+
+    println!("{}", format_hex(&contents))
+}
+
+fn format_hex(contents: &Vec<u8>) -> String {
     let mut result = String::from("");
     
     for (i, byte) in contents.iter().enumerate(){
@@ -18,7 +23,8 @@ fn main() {
         }
         result.push_str(&format!("{:x} ", byte));
     }
-    println!("{}", result)
+
+    return result;
 }
 
 fn disassemble_8080(buffer: &String, pc: usize){
