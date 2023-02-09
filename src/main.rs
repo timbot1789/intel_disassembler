@@ -165,6 +165,9 @@ fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
             *pc += 1;
             return res;
         })(),
+        0x0f => (|| {
+            return simple_render("RRC\n", pc);
+        } )(),
         0x1f => (|| {
             *pc += 1;
             return String::from("RAR\n");
@@ -177,6 +180,9 @@ fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
         0x27 => (|| {
             *pc += 1;
             return String::from("DAA\n");
+        } )(),
+        0x2a => (|| {
+            return triple_render("LHLD", pc, buffer);
         } )(),
         0x2f => (|| {
             *pc += 1;
@@ -267,7 +273,7 @@ fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
                 (0xc1, "B"),
                 (0xd1, "D"),
                 (0xe1, "H"),
-                (0xf1, "SP"),
+                (0xf1, "PSW"),
             ]);
             let reg = registers[&buffer[*pc]];
             *pc += 1;
@@ -349,8 +355,101 @@ fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
         0xd8 => (|| {
             return simple_render("RC\n", pc);
         })(),
+        0xda => (|| {
+            return triple_render("JC", pc, buffer);
+        })(),
+        0xdb => (|| {
+            return double_render("IN", pc, buffer);
+        })(),
+        0xdc => (|| {
+            return triple_render("CC", pc, buffer);
+        })(),
+        0xde => (|| {
+            return double_render("SBI", pc, buffer);
+        })(),
+        0xdf => (|| {
+            return simple_render("RST 3\n", pc)
+        } )(),
+        0xe0 => (|| {
+            return simple_render("RPO\n", pc)
+        } )(),
+        0xe2 => (|| {
+            return triple_render("JPO", pc, buffer);
+        })(),
+        0xe3 => (|| {
+            return simple_render("XHTL\n", pc);
+        })(),
+        0xe4 => (|| {
+            return triple_render("CPO", pc, buffer);
+        })(),
+        0xe6 => (|| {
+            return triple_render("ANI", pc, buffer);
+        })(),
+        0xe7 => (|| {
+            return simple_render("RST 4\n", pc);
+        } )(),
+        0xe8 => (|| {
+            return simple_render("RPE\n", pc);
+        } )(),
+        0xe9 => (|| {
+            return simple_render("PCHL\n", pc);
+        } )(),
+        0xea => (|| {
+            return triple_render("JPE", pc, buffer);
+        })(),
+        0xeb => (|| {
+            return simple_render("XCHG\n", pc);
+        } )(),
+        0xec => (|| {
+            return triple_render("CPE", pc, buffer);
+        })(),
+        0xee => (|| {
+            return double_render("XRI", pc, buffer);
+        })(),
+        0xef => (|| {
+            return simple_render("RST 5\n", pc);
+        } )(),
+        0xf0 => (|| {
+            return simple_render("RP\n", pc);
+        } )(),
+        0xf2 => (|| {
+            return triple_render("JP", pc, buffer);
+        } )(),
+        0xf3 => (|| {
+            return simple_render("DI\n", pc);
+        } )(),
+        0xf4 => (|| {
+            return triple_render("CP", pc, buffer);
+        } )(),
+        0xf6 => (|| {
+            return double_render("ORI", pc, buffer);
+        })(),
+        0xf7 => (|| {
+            return simple_render("RST 6\n", pc);
+        } )(),
+        0xf8 => (|| {
+            return simple_render("RM\n", pc);
+        } )(),
+        0xf9 => (|| {
+            return simple_render("SPHL\n", pc);
+        } )(),
+        0xfa => (|| {
+            return triple_render("JM", pc, buffer);
+        } )(),
+        0xfb => (|| {
+            return simple_render("EI\n", pc);
+        } )(),
+        0xfc => (|| {
+            return triple_render("CM", pc, buffer);
+        } )(),
+        0xfe => (|| {
+            return double_render("CRI", pc, buffer);
+        })(),
+        0xff => (|| {
+            return simple_render("RST 7\n", pc);
+        } )(),
         _ => (|| {
-            return simple_render("Nimpl\n", pc)
+            return simple_render(&format!("Nimpl: {:x}\n", buffer[*pc]), pc);
         } )(),
     }
 }
