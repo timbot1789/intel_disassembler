@@ -11,11 +11,10 @@ fn main() {
         .expect("Should have been able to read the file");
 
     let mut pc: usize = 0;
-    let mut cmd: usize = 0;
     let mut result = String::from("");
     while pc < contents.len(){
-        result.push_str(&format!("{:x} | {}", cmd, &disassemble_8080(&contents, &mut pc)));
-        cmd += 1
+        let cpc = pc;
+        result.push_str(&format!("{:04x} | {}", cpc, &disassemble_8080(&contents, &mut pc)));
     }
     println!("{}", result);
 }
