@@ -4,34 +4,25 @@ use std::collections::HashMap;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let file_path = &args[1];
 
-    println!("searching for file {}", file_path);
+    let file_path = &args[1];
 
     let contents = fs::read(file_path)
         .expect("Should have been able to read the file");
-    
-    // println!("{}", format_hex(&contents));
 
     let mut pc: usize = 0;
+    let mut cmd: usize = 0;
     let mut result = String::from("");
     while pc < contents.len(){
-        result.push_str(&disassemble_8080(&contents, &mut pc));
+        result.push_str(&format!("{:x} | {}", cmd, &disassemble_8080(&contents, &mut pc)));
+        cmd += 1
     }
     println!("{}", result);
 }
 
-// fn format_hex(contents: &Vec<u8>) -> String {
-//     let mut result = String::from("");
-    
-//     for (i, byte) in contents.iter().enumerate(){
-//         if i % 16 == 0 && i != 0 {
-//             result.push('\n')
-//         }
-//         result.push_str(&format!("{:x}", byte));
-//     }
-
-//     return result;
+// fn gen_testing_file() {
+//     let arr: Vec<u8> = (0..=255).collect();
+//     fs::write("testfile", arr);
 // }
 
 fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
@@ -47,183 +38,75 @@ fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
     ]);
 
     return match buffer[*pc] {
-        0x00 => (|| {
-                return simple_render("NOP\n", pc);
-            } )(),
-        0x01 | 0x11 | 0x21 | 0x31 => (|| {
-            let registers = HashMap::from([
-                (0x01, "B"),
-                (0x11, "D"),
-                (0x21, "H"),
-                (0x31, "SP"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("LXI {},{:x}{:x}\n", reg, buffer[*pc + 1], buffer[*pc + 2]);
-            *pc += 3;
-            return res;
-        })(),
-        0x02 | 0x12 => (|| {
-            let reg = if buffer[*pc] == 0x02 { "B" } else { "D" };
-            *pc += 1;
-            return format!("STAX {}\n", reg);
-        } )(),
-        0x03 | 0x13 | 0x23 | 0x33 => (|| {
-            let registers = HashMap::from([
-                (0x03, "B"),
-                (0x13, "D"),
-                (0x23, "H"),
-                (0x33, "SP"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("INX {}\n", reg);
-            *pc += 1;
-            return res;
-        })(),
-        0x04 | 0x0c | 0x14 | 0x1c | 0x24 | 0x2c | 0x34 | 0x3c => (|| {
-            let registers = HashMap::from([
-                (0x04, "B"),
-                (0x0c, "C"),
-                (0x14, "D"),
-                (0x1c, "E"),
-                (0x24, "H"),
-                (0x2c, "L"),
-                (0x34, "M"),
-                (0x3c, "A")
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("INR {}\n", reg);
-            *pc += 1;
-            return res;
-        })(),
-        0x05 | 0x0d | 0x15 | 0x1d | 0x25 | 0x2d | 0x35 | 0x3d => (|| {
-            let registers = HashMap::from([
-                (0x05, "B"),
-                (0x0d, "C"),
-                (0x15, "D"),
-                (0x1d, "E"),
-                (0x25, "H"),
-                (0x2d, "L"),
-                (0x35, "M"),
-                (0x3d, "A")
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("DCR {}\n", reg);
-            *pc += 1;
-            return res;
-        })(),
-        0x06 | 0x0e | 0x16 | 0x1e | 0x26 | 0x2e | 0x36 | 0x3e => (|| {
-            let registers = HashMap::from([
-                (0x06, "B"),
-                (0x0e, "C"),
-                (0x16, "D"),
-                (0x1e, "E"),
-                (0x26, "H"),
-                (0x2e, "L"),
-                (0x36, "M"),
-                (0x3e, "A")
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("MVI {},{}\n", reg, buffer[*pc + 1]);
-            *pc += 2;
-            return res;
-        })(),
-        0x07 => (|| {
-            *pc += 1;
-            return String::from("RLC\n");
-        } )(),
-        0x09 | 0x19 | 0x29 | 0x39 => (|| {
-            let registers = HashMap::from([
-                (0x09, "B"),
-                (0x19, "D"),
-                (0x29, "H"),
-                (0x39, "SP"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("DAD {}\n", reg);
-            *pc += 1;
-            return res;
-        })(),
-        0x0a | 0x1a => (|| {
-            let registers = HashMap::from([
-                (0x0a, "B"),
-                (0x1a, "D"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("LDAX {}\n", reg);
-            *pc += 1;
-            return res;
-        })(),
-        0x0b | 0x1b | 0x2b | 0x3b => (|| {
-            let registers = HashMap::from([
-                (0x0b, "B"),
-                (0x1b, "D"),
-                (0x2b, "H"),
-                (0x3b, "SP"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            let res = format!("DCX {}\n", reg);
-            *pc += 1;
-            return res;
-        })(),
-        0x0f => (|| {
-            return simple_render("RRC\n", pc);
-        } )(),
-        0x1f => (|| {
-            *pc += 1;
-            return String::from("RAR\n");
-        } )(),
-        0x22 => (|| {
-            let res = format!("SHLD {:x}{:x}\n", &buffer[*pc + 1], &buffer[*pc + 2]);
-            *pc += 1;
-            return res;
-        } )(),
-        0x27 => (|| {
-            *pc += 1;
-            return String::from("DAA\n");
-        } )(),
-        0x2a => (|| {
-            return triple_render("LHLD", pc, buffer);
-        } )(),
-        0x2f => (|| {
-            *pc += 1;
-            return String::from("CMA\n");
-        } )(),
-        0x32 => (|| {
-            let ret = format!("STA {:x}{:x}\n", &buffer[*pc + 1], &buffer[*pc + 2]);
-            *pc += 3;
-            return ret;
-        } )(),
-        0x37 => (|| {
-            *pc += 1;
-            return format!("STC");
-        } )(),
-        0x3a => (|| {
-            let ret =  format!("LDA {:x}{:x}\n", &buffer[*pc + 1], &buffer[*pc + 2]);
-            *pc += 3;
-            return ret;
-        } )(),
-        0x3f => (|| {
-            *pc += 1;
-            return String::from("CMC\n");
-        } )(),
+        0x00 => simple_render("NOP\n", pc),
+        0x01 => triple_render("LXI B,", pc, buffer),
+        0x11 => triple_render("LXI D,", pc, buffer),
+        0x21 => triple_render("LXI H,", pc, buffer),
+        0x31 => triple_render("LXI SP,", pc, buffer),
+        0x02 => simple_render("STAX B\n", pc),
+        0x12 => simple_render("STAX D\n", pc),
+        0x03 => simple_render("INX B\n", pc),
+        0x13 => simple_render("INX D\n", pc),
+        0x23 => simple_render("INX H\n", pc),
+        0x33 => simple_render("INX SP\n", pc),
+        0x04 => simple_render("INR B\n", pc),
+        0x0c => simple_render("INR C\n", pc),
+        0x14 => simple_render("INR D\n", pc),
+        0x1c => simple_render("INR D\n", pc),
+        0x24 => simple_render("INR E\n", pc),
+        0x2c => simple_render("INR H\n", pc),
+        0x34 => simple_render("INR L\n", pc),
+        0x3c => simple_render("INR A\n", pc),
+        0x05 => simple_render("DCR B\n", pc),
+        0x0d => simple_render("DCR C\n", pc),
+        0x15 => simple_render("DCR D\n", pc),
+        0x17 => simple_render("RAL\n", pc),
+        0x1d => simple_render("DCR E\n", pc),
+        0x25 => simple_render("DCR H\n", pc),
+        0x2d => simple_render("DCR L\n", pc),
+        0x3d => simple_render("DCR A\n", pc),
+        0x35 => simple_render("DCR M\n", pc),
+        0x06 => double_render("MVI B,", pc, buffer),
+        0x0e => double_render("MVI C,", pc, buffer),
+        0x16 => double_render("MVI D,", pc, buffer),
+        0x1e => double_render("MVI E,", pc, buffer),
+        0x26 => double_render("MVI H,", pc, buffer),
+        0x2e => double_render("MVI L,", pc, buffer),
+        0x36 => double_render("MVI M,", pc, buffer),
+        0x3e => double_render("MVI A,", pc, buffer),
+        0x07 => simple_render("RLC\n", pc),
+        0x09 => simple_render("DAD B\n", pc),
+        0x19 => simple_render("DAD D\n", pc),
+        0x29 => simple_render("DAD H\n", pc),
+        0x39 => simple_render("DAD SP\n", pc),
+        0x0a => simple_render("LDAX B\n", pc),
+        0x1a => simple_render("LDAX D\n", pc),
+        0x0b => simple_render("DCX B\n", pc),
+        0x1b => simple_render("DCX D\n", pc),
+        0x2b => simple_render("DCX H\n", pc),
+        0x3b => simple_render("DCX SP\n", pc),
+        0x0f => simple_render("RRC\n", pc),
+        0x1f => simple_render("RAR\n", pc),
+        0x22 => triple_render("SHLD", pc, buffer),
+        0x27 => simple_render("DAA\n", pc),
+        0x2a => triple_render("LHLD", pc, buffer),
+        0x2f => simple_render("CMA\n", pc),
+        0x32 => triple_render("STA", pc, buffer),
+        0x37 => simple_render("STC\n", pc),
+        0x3a => triple_render("LDA", pc, buffer),
+        0x3f => simple_render("CMC\n", pc),
         0x40..=0x75 => (|| {
             let reg_1 = (buffer[*pc] << 2) >> 5;
             let reg_2 = buffer[*pc] & 0b00000111;
             *pc += 1;
-            return format!("MOV {}{}\n", reg_list[&reg_1], reg_list[&reg_2]);
+            return format!("MOV {},{}\n", reg_list[&reg_1], reg_list[&reg_2]);
         })(),
-        0x76 => (|| {
-            *pc += 1;
-            return String::from("HLT\n");
-        } )(),
-        0x77 => (|| {
-            *pc += 1;
-            return String::from("MOV M,A\n");
-        } )(),
+        0x76 => simple_render("HLT\n", pc),
+        0x77 => simple_render("MOV M,A\n", pc),
         0x78..=0x7f => (|| {
-            let reg_2 = buffer[*pc] & 0b00000111;
+            let reg = buffer[*pc] & 0b00000111;
             *pc += 1;
-            return format!("MOV A,{}\n", reg_list[&reg_2]);
+            return format!("MOV A,{}\n", reg_list[&reg]);
         } )(),
         0x80..=0x87 => (|| {
             let reg = buffer[*pc] & 0b00000111;
@@ -265,192 +148,66 @@ fn disassemble_8080(buffer: &Vec<u8>, pc: &mut usize) -> String{
             *pc += 1;
             return format!("CMP {}\n", reg_list[&reg]);
         })(),
-        0xc0 => (|| {
-            return simple_render("RNZ\n", pc)
-        } )(),
-        0xc1 | 0xd1 | 0xe1 | 0xf1 => (|| {
-            let registers = HashMap::from([
-                (0xc1, "B"),
-                (0xd1, "D"),
-                (0xe1, "H"),
-                (0xf1, "PSW"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            *pc += 1;
-            return format!("POP {}\n", reg);
-        })(),
-        0xc2 => (|| {
-            let ret = format!("JNZ {:x}{:x}\n", buffer[*pc + 1], buffer[*pc + 2]);
-            *pc += 3;
-            return ret;
-        })(),
-        0xc3 => (|| {
-            let ret = format!("JMP {:x}{:x}\n", buffer[*pc + 1], buffer[*pc + 2]);
-            *pc += 3;
-            return ret;
-        })(),
-        0xc4 => (|| {
-            let ret = format!("CNZ {:x}{:x}\n", buffer[*pc + 1], buffer[*pc + 2]);
-            *pc += 3;
-            return ret;
-        })(),
-        0xc5 | 0xd5 | 0xe5 | 0xf5 => (|| {
-            let registers = HashMap::from([
-                (0xc5, "B"),
-                (0xd5, "D"),
-                (0xe5, "H"),
-                (0xf5, "PSW"),
-            ]);
-            let reg = registers[&buffer[*pc]];
-            *pc += 1;
-            return format!("PUSH {}\n", reg);
-        })(),
-        0xc6 => (|| {
-            let ret = format!("ADI {:x}\n", buffer[*pc + 1]);
-            *pc += 2;
-            return ret;
-        })(),
-        0xc7 => (|| {
-            return simple_render("RST 0\n", pc)
-        } )(),
-        0xc8 => (|| {
-            return simple_render("RZ\n", pc)
-        } )(),
-        0xc9 => (|| {
-            return simple_render("RET\n", pc)
-        } )(),
-        0xca => (|| {
-            return triple_render("JZ", pc, buffer);
-        })(),
-        0xcc => (|| {
-            return triple_render("CZ", pc, buffer);
-        })(),
-        0xcd => (|| {
-            return triple_render("CALL", pc, buffer);
-        })(),
-        0xce => (|| {
-            return double_render("ACI", pc, buffer);
-        })(),
-        0xcf => (|| {
-            return simple_render("RST 1\n", pc)
-        } )(),
-        0xd0 => (|| {
-            return simple_render("RNC\n", pc)
-        } )(),
-        0xd2 => (|| {
-            return triple_render("JNC", pc, buffer);
-        })(),
-        0xd3 => (|| {
-            return double_render("OUT", pc, buffer);
-        })(),
-        0xd4 => (|| {
-            return triple_render("CNC", pc, buffer);
-        })(),
-        0xd6 => (|| {
-            return double_render("SUI", pc, buffer);
-        })(),
-        0xd7 => (|| {
-            return simple_render("RST 2\n", pc);
-        })(),
-        0xd8 => (|| {
-            return simple_render("RC\n", pc);
-        })(),
-        0xda => (|| {
-            return triple_render("JC", pc, buffer);
-        })(),
-        0xdb => (|| {
-            return double_render("IN", pc, buffer);
-        })(),
-        0xdc => (|| {
-            return triple_render("CC", pc, buffer);
-        })(),
-        0xde => (|| {
-            return double_render("SBI", pc, buffer);
-        })(),
-        0xdf => (|| {
-            return simple_render("RST 3\n", pc)
-        } )(),
-        0xe0 => (|| {
-            return simple_render("RPO\n", pc)
-        } )(),
-        0xe2 => (|| {
-            return triple_render("JPO", pc, buffer);
-        })(),
-        0xe3 => (|| {
-            return simple_render("XHTL\n", pc);
-        })(),
-        0xe4 => (|| {
-            return triple_render("CPO", pc, buffer);
-        })(),
-        0xe6 => (|| {
-            return triple_render("ANI", pc, buffer);
-        })(),
-        0xe7 => (|| {
-            return simple_render("RST 4\n", pc);
-        } )(),
-        0xe8 => (|| {
-            return simple_render("RPE\n", pc);
-        } )(),
-        0xe9 => (|| {
-            return simple_render("PCHL\n", pc);
-        } )(),
-        0xea => (|| {
-            return triple_render("JPE", pc, buffer);
-        })(),
-        0xeb => (|| {
-            return simple_render("XCHG\n", pc);
-        } )(),
-        0xec => (|| {
-            return triple_render("CPE", pc, buffer);
-        })(),
-        0xee => (|| {
-            return double_render("XRI", pc, buffer);
-        })(),
-        0xef => (|| {
-            return simple_render("RST 5\n", pc);
-        } )(),
-        0xf0 => (|| {
-            return simple_render("RP\n", pc);
-        } )(),
-        0xf2 => (|| {
-            return triple_render("JP", pc, buffer);
-        } )(),
-        0xf3 => (|| {
-            return simple_render("DI\n", pc);
-        } )(),
-        0xf4 => (|| {
-            return triple_render("CP", pc, buffer);
-        } )(),
-        0xf6 => (|| {
-            return double_render("ORI", pc, buffer);
-        })(),
-        0xf7 => (|| {
-            return simple_render("RST 6\n", pc);
-        } )(),
-        0xf8 => (|| {
-            return simple_render("RM\n", pc);
-        } )(),
-        0xf9 => (|| {
-            return simple_render("SPHL\n", pc);
-        } )(),
-        0xfa => (|| {
-            return triple_render("JM", pc, buffer);
-        } )(),
-        0xfb => (|| {
-            return simple_render("EI\n", pc);
-        } )(),
-        0xfc => (|| {
-            return triple_render("CM", pc, buffer);
-        } )(),
-        0xfe => (|| {
-            return double_render("CRI", pc, buffer);
-        })(),
-        0xff => (|| {
-            return simple_render("RST 7\n", pc);
-        } )(),
-        _ => (|| {
-            return simple_render(&format!("Nimpl: {:x}\n", buffer[*pc]), pc);
-        } )(),
+        0xc0 => simple_render("RNZ\n", pc),
+        0xc1 => simple_render("POP B\n", pc),
+        0xd1 => simple_render("POP D\n", pc),
+        0xe1 => simple_render("POP H\n", pc),
+        0xf1 => simple_render("POP PSW\n", pc),
+        0xc2 => triple_render("JNZ", pc, buffer),
+        0xc3 => triple_render("JMP", pc, buffer),
+        0xc4 => triple_render("CNZ", pc, buffer),
+        0xc5 => simple_render("PUSH B\n", pc),
+        0xd5 => simple_render("PUSH D\n", pc),
+        0xe5 => simple_render("PUSH H\n", pc),
+        0xf5 => simple_render("PUSH PSW\n", pc),
+        0xc6 => double_render("ADI", pc, buffer),
+        0xc7 => simple_render("RST 0\n", pc),
+        0xc8 => simple_render("RZ\n", pc),
+        0xc9 => simple_render("RET\n", pc),
+        0xca => triple_render("JZ", pc, buffer),
+        0xcc => triple_render("CZ", pc, buffer),
+        0xcd => triple_render("CALL", pc, buffer),
+        0xce => double_render("ACI", pc, buffer),
+        0xcf => simple_render("RST 1\n", pc),
+        0xd0 => simple_render("RNC\n", pc),
+        0xd2 => triple_render("JNC", pc, buffer),
+        0xd3 => double_render("OUT", pc, buffer),
+        0xd4 => triple_render("CNC", pc, buffer),
+        0xd6 => double_render("SUI", pc, buffer),
+        0xd7 => simple_render("RST 2\n", pc),
+        0xd8 => simple_render("RC\n", pc),
+        0xda => triple_render("JC", pc, buffer),
+        0xdb => double_render("IN", pc, buffer),
+        0xdc => triple_render("CC", pc, buffer),
+        0xde => double_render("SBI", pc, buffer),
+        0xdf => simple_render("RST 3\n", pc),
+        0xe0 => simple_render("RPO\n", pc),
+        0xe2 => triple_render("JPO", pc, buffer),
+        0xe3 => simple_render("XHTL\n", pc),
+        0xe4 => triple_render("CPO", pc, buffer),
+        0xe6 => double_render("ANI", pc, buffer),
+        0xe7 => simple_render("RST 4\n", pc),
+        0xe8 => simple_render("RPE\n", pc),
+        0xe9 => simple_render("PCHL\n", pc),
+        0xea => triple_render("JPE", pc, buffer),
+        0xeb => simple_render("XCHG\n", pc),
+        0xec => triple_render("CPE", pc, buffer),
+        0xee => double_render("XRI", pc, buffer),
+        0xef => simple_render("RST 5\n", pc),
+        0xf0 => simple_render("RP\n", pc),
+        0xf2 => triple_render("JP", pc, buffer),
+        0xf3 => simple_render("DI\n", pc),
+        0xf4 => triple_render("CP", pc, buffer),
+        0xf6 => double_render("ORI", pc, buffer),
+        0xf7 => simple_render("RST 6\n", pc),
+        0xf8 => simple_render("RM\n", pc),
+        0xf9 => simple_render("SPHL\n", pc),
+        0xfa => triple_render("JM", pc, buffer),
+        0xfb => simple_render("EI\n", pc),
+        0xfc => triple_render("CM", pc, buffer),
+        0xfe => double_render("CPI", pc, buffer),
+        0xff => simple_render("RST 7\n", pc),
+        _ => simple_render(&format!("Nimpl: {:x}\n", buffer[*pc]), pc),
     }
 }
 
@@ -460,13 +217,13 @@ fn simple_render(string: &str, pc: &mut usize) -> String{
 }
 
 fn double_render(string: &str, pc: &mut usize, buffer: &Vec<u8>) -> String {
-    let ret = format!("{} {:x}\n",string, buffer[*pc + 1]);
+    let ret = format!("{} {:02x}\n",string, buffer[*pc + 1]);
     *pc += 2;
     return ret;
 }
 
 fn triple_render(string: &str, pc: &mut usize, buffer: &Vec<u8>) -> String {
-    let ret = format!("{} {:x}{:x}\n",string, buffer[*pc + 1], buffer[*pc + 2]);
+    let ret = format!("{} {:02x}{:02x}\n",string, buffer[*pc + 2], buffer[*pc + 1]);
     *pc += 3;
     return ret;
 }
